@@ -3,6 +3,7 @@ import * as d3 from 'd3';
 
 const API_URL = 'https://api.data.gov.sg/v1/environment/pm25';
 const IOS_PROFILE_DOWNLOAD_URL = 'https://ios-install-api.benson.in.net/install?id=conf_1791970671898';
+const PULL_TO_REFRESH_DISTANCE = 64;
 const REGION_NAMES = ['north', 'south', 'east', 'west', 'central'];
 const REGION_LABELS = { north: 'North', south: 'South', east: 'East', west: 'West', central: 'Central' };
 const GEOJSON = {
@@ -41,6 +42,8 @@ function InstallIcon() {
 function App() {
   const mapContainer = useRef(null);
   const mapApi = useRef(null);
+  const pullStart = useRef(null);
+  const pullDistanceRef = useRef(0);
   const [readings, setReadings] = useState(null);
   const [timestamp, setTimestamp] = useState(null);
   const [activeRegion, setActiveRegion] = useState('national');
@@ -51,6 +54,8 @@ function App() {
   const [isInstalled, setIsInstalled] = useState(() => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true);
   const [showInstallHelp, setShowInstallHelp] = useState(false);
   const [installStatus, setInstallStatus] = useState('idle');
+  const [pullDistance, setPullDistance] = useState(0);
+  const [pullRefreshing, setPullRefreshing] = useState(false);
 
   useEffect(() => {
     const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
@@ -142,6 +147,67 @@ function App() {
   }, [refresh]);
 
   useEffect(() => {
+    if (!loading) setPullRefreshing(false);
+  }, [loading]);
+
+  useEffect(() => {
+    const onTouchStart = (event) => {
+      if (loading || event.touches.length !== 1 || window.scrollY > 0) {
+        pullStart.current = null;
+        return;
+      }
+      pullStart.current = {
+        x: event.touches[0].clientX,
+        y: event.touches[0].clientY,
+      };
+    };
+
+    const onTouchMove = (event) => {
+      if (!pullStart.current || event.touches.length !== 1) return;
+      const deltaX = event.touches[0].clientX - pullStart.current.x;
+      const deltaY = event.touches[0].clientY - pullStart.current.y;
+      if (Math.abs(deltaX) > Math.abs(deltaY) || window.scrollY > 0) {
+        pullStart.current = null;
+        return;
+      }
+      if (deltaY > 0) {
+        if (event.cancelable) event.preventDefault();
+        const distance = Math.min(deltaY * 0.8, 96);
+        pullDistanceRef.current = distance;
+        setPullDistance(distance);
+      }
+    };
+
+    const finishPull = () => {
+      const shouldRefresh = pullDistanceRef.current >= PULL_TO_REFRESH_DISTANCE && !loading;
+      pullStart.current = null;
+      pullDistanceRef.current = 0;
+      setPullDistance(0);
+      if (shouldRefresh) {
+        setPullRefreshing(true);
+        refresh();
+      }
+    };
+
+    const cancelPull = () => {
+      pullStart.current = null;
+      pullDistanceRef.current = 0;
+      setPullDistance(0);
+    };
+
+    document.addEventListener('touchstart', onTouchStart, { passive: true });
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    document.addEventListener('touchend', finishPull, { passive: true });
+    document.addEventListener('touchcancel', cancelPull, { passive: true });
+    return () => {
+      document.removeEventListener('touchstart', onTouchStart);
+      document.removeEventListener('touchmove', onTouchMove);
+      document.removeEventListener('touchend', finishPull);
+      document.removeEventListener('touchcancel', cancelPull);
+    };
+  }, [loading, refresh]);
+
+  useEffect(() => {
     const container = mapContainer.current;
     if (!container) return undefined;
     const drawMap = () => {
@@ -186,6 +252,15 @@ function App() {
   }, [readings, activeRegion, worstRegion]);
 
   return <div className="min-h-screen relative flex flex-col items-center">
+    {(pullDistance > 0 || pullRefreshing) && <div
+      className={`pull-refresh-indicator glass-panel ${pullRefreshing ? 'is-refreshing' : ''}`}
+      style={{ transform: `translate(-50%, calc(-100% + ${pullRefreshing ? PULL_TO_REFRESH_DISTANCE : pullDistance}px))` }}
+      role="status"
+      aria-live="polite"
+    >
+      <span className={pullRefreshing ? 'spin-slow' : ''}><RefreshIcon /></span>
+      <span>{pullRefreshing ? 'Refreshing…' : pullDistance >= PULL_TO_REFRESH_DISTANCE ? 'Release to refresh' : 'Pull to refresh'}</span>
+    </div>}
     <div className="app-content w-full max-w-md min-h-screen flex flex-col relative px-6 py-8">
       <header className="topbar flex items-center justify-between mb-5 w-full z-10 gap-2">
         <div className="topbar-brand min-w-0 flex items-center gap-3"><img src="/icons/air-logo.svg" alt="SG AIR" className="h-10 w-10 rounded-lg bg-white" /><div><h1 className="text-2xl font-bold tracking-wider opacity-90">SG AIR</h1><p className="brand-caption text-[9px] font-light tracking-[0.12em] opacity-60 uppercase mt-1 whitespace-nowrap">Real-time PM 2.5</p></div></div>
