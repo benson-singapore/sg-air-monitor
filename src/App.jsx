@@ -18,11 +18,11 @@ const GEOJSON = {
 };
 
 function getAirQualityTheme(value) {
-  if (!Number.isFinite(value)) return { label: 'Loading...', themeId: null, chip: 'bg-white/10 border-white/15 text-white/70', dot: 'bg-white/50', color: '#cbd5e1', fill: 'rgba(203, 213, 225, .12)' };
-  if (value <= 55) return { label: 'Normal', themeId: 'normal', chip: 'bg-emerald-500/15 border-emerald-300/20 text-emerald-100', dot: 'bg-emerald-300', color: '#34d399', fill: 'rgba(52, 211, 153, .18)' };
-  if (value <= 150) return { label: 'Elevated', themeId: 'elevated', chip: 'bg-yellow-400/15 border-yellow-200/20 text-yellow-300', dot: 'bg-yellow-400', color: '#facc15', fill: 'rgba(250, 204, 21, .2)' };
-  if (value <= 250) return { label: 'High', themeId: 'high', chip: 'bg-rose-300/15 border-rose-200/20 text-rose-200', dot: 'bg-rose-400', color: '#fb7185', fill: 'rgba(251, 113, 133, .2)' };
-  return { label: 'Very High', themeId: 'veryhigh', chip: 'bg-violet-400/15 border-violet-200/20 text-violet-200', dot: 'bg-violet-400', color: '#c084fc', fill: 'rgba(192, 132, 252, .18)' };
+  if (!Number.isFinite(value)) return { label: 'Loading...', themeId: null, chip: 'bg-white/10 border-white/15 text-white/70', dot: 'bg-white/50', color: '#cbd5e1' };
+  if (value <= 55) return { label: 'Normal', themeId: 'normal', chip: 'bg-emerald-500/15 border-emerald-300/20 text-emerald-100', dot: 'bg-emerald-300', color: '#34d399' };
+  if (value <= 150) return { label: 'Elevated', themeId: 'elevated', chip: 'bg-yellow-400/15 border-yellow-200/20 text-yellow-300', dot: 'bg-yellow-400', color: '#facc15' };
+  if (value <= 250) return { label: 'High', themeId: 'high', chip: 'bg-rose-300/15 border-rose-200/20 text-rose-200', dot: 'bg-rose-400', color: '#fb7185' };
+  return { label: 'Very High', themeId: 'veryhigh', chip: 'bg-violet-400/15 border-violet-200/20 text-violet-200', dot: 'bg-violet-400', color: '#c084fc' };
 }
 
 function formatTime(isoString) {
@@ -240,7 +240,10 @@ function App() {
     if (!map || !readings) return;
     REGION_NAMES.forEach((region) => {
       const theme = getAirQualityTheme(readings[region]);
-      map.svg.select(`#map-${region}`).transition().duration(1000).style('fill', theme.fill).style('stroke', theme.color);
+      map.svg.select(`#map-${region}`).transition().duration(1000)
+        .style('fill', theme.color)
+        .style('fill-opacity', 0.32)
+        .style('stroke', theme.color);
     });
     const markerRegion = activeRegion === 'national' ? worstRegion : activeRegion;
     const feature = GEOJSON.features.find((item) => item.properties.name === markerRegion);
