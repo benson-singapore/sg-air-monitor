@@ -8,6 +8,9 @@ body {
   overflow-x: hidden;
 }
 
+html { min-height: 100%; background-color: #641f27; }
+.app-content.min-h-screen { padding-top: calc(2rem + env(safe-area-inset-top)); }
+
 button { font-family: inherit; }
 .glass-panel { background: rgba(255,255,255,.08); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.15); box-shadow: 0 8px 32px 0 rgba(0,0,0,.2); }
 .pulse-fast { animation: pulse-op 1.5s cubic-bezier(.4,0,.6,1) infinite; }

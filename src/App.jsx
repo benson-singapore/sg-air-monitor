@@ -154,6 +154,9 @@ function App() {
   const activeTheme = getAirQualityTheme(activeValue);
   useEffect(() => {
     document.body.dataset.airTheme = activeTheme.themeId || 'normal';
+    const pageColor = getComputedStyle(document.body).backgroundColor;
+    document.documentElement.style.backgroundColor = pageColor;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', pageColor);
   }, [activeTheme.themeId]);
 
   useEffect(() => {
@@ -173,7 +176,7 @@ function App() {
   }, [readings, activeRegion, worstRegion]);
 
   return <div className="min-h-screen relative flex flex-col items-center">
-    <div className="w-full max-w-md min-h-screen flex flex-col relative px-6 py-8">
+    <div className="app-content w-full max-w-md min-h-screen flex flex-col relative px-6 py-8">
       <header className="topbar flex items-center justify-between mb-5 w-full z-10 gap-2">
         <div className="topbar-brand min-w-0 flex items-center gap-3"><img src="/icons/air-logo.svg" alt="SG AIR" className="h-10 w-10 rounded-lg bg-white" /><div><h1 className="text-2xl font-bold tracking-wider opacity-90">SG AIR</h1><p className="brand-caption text-[9px] font-light tracking-[0.12em] opacity-60 uppercase mt-1 whitespace-nowrap">Real-time PM 2.5</p></div></div>
         <button onClick={refresh} aria-label="Refresh air quality" className="justify-self-end w-10 h-10 rounded-full glass-panel flex items-center justify-center hover:bg-white/15 transition-all active:scale-95">
