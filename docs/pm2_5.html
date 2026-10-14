@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>新加坡实时 PM2.5 空气质量 (全新版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #0f172a;
+            color: #ffffff;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* 动态渐变背景动画 */
+        .bg-animate {
+            background-size: 300% 300%;
+            animation: gradientShift 15s ease infinite;
+            transition: background-image 2s ease-in-out;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 毛玻璃效果类 */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        /* 加载状态的脉冲效果 */
+        .pulse-fast {
+            animation: pulse-op 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-op {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .spin-slow {
+            animation: spin 2s linear infinite;
+        }
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 呼吸地图动画效果 */
+        .map-pulse {
+            animation: map-pulse-anim 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes map-pulse-anim {
+            0% { filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); stroke-width: 1px; }
+            100% { filter: drop-shadow(0 0 15px rgba(255,255,255,0.4)); stroke-width: 2px; }
+        }
+
+        /* 地图图层样式 */
+        #map-container {
+            position: absolute;
+            top: 15%;
+            left: 0;
+            width: 100%;
+            height: 40%;
+            z-index: 0;
+            opacity: 0.4;
+            pointer-events: none; /* 让地图不妨碍点击下方元素 */
+            transition: all 1s ease;
+        }
+
+        .region-path {
+            fill: rgba(255,255,255,0.05);
+            stroke: rgba(255,255,255,0.3);
+            stroke-width: 1px;
+            transition: fill 0.5s ease, stroke 0.5s ease;
+        }
+        
+        .floating-marker {
+            transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 发光文字效果 */
+        .glow-text {
+            text-shadow: 0 0 20px rgba(255,255,255,0.4);
+        }
+
+        /* 外环发光动画 */
+        .ring-glow {
+            box-shadow: 0 0 30px rgba(255,255,255,0.1), inset 0 0 20px rgba(255,255,255,0.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen relative flex flex-col items-center">
+
+    <!-- 全屏动态背景层 (支持平滑淡入淡出切换) -->
+    <div id="bg-theme-default" class="fixed inset-0 z-[-3] bg-animate bg-gradient-to-br from-slate-800 via-slate-900 to-black"></div>
+    <div id="bg-theme-normal" class="fixed inset-0 z-[-2] bg-animate bg-gradient-to-br from-emerald-900 via-teal-900 to-slate-900 opacity-0 transition-opacity duration-1000 ease-in-out"></div>
+    <div id="bg-theme-elevated" class="fixed inset-0 z-[-2] bg-animate bg-gradient-to-br from-amber-900 via-orange-900 to-slate-900 opacity-0 transition-opacity duration-1000 ease-in-out"></div>
+    <div id="bg-theme-high" class="fixed inset-0 z-[-2] bg-animate bg-gradient-to-br from-red-900 via-rose-900 to-slate-900 opacity-0 transition-opacity duration-1000 ease-in-out"></div>
+    <div id="bg-theme-veryhigh" class="fixed inset-0 z-[-2] bg-animate bg-gradient-to-br from-purple-900 via-fuchsia-900 to-slate-900 opacity-0 transition-opacity duration-1000 ease-in-out"></div>
+
+    <!-- 顶部环境光晕修饰 -->
+    <div class="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-white/5 blur-[100px] z-[-1]"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-white/5 blur-[120px] z-[-1]"></div>
+
+    <!-- 地图容器 -->
+    <div id="map-container"></div>
+
+    <!-- 主容器 -->
+    <div class="w-full max-w-md w-full min-h-screen flex flex-col relative px-6 py-8">
+        
+        <!-- 顶部导航条 -->
+        <header class="flex justify-between items-center mb-10 w-full z-10">
+            <div>
+                <h1 class="text-2xl font-bold tracking-wider opacity-90">SG AIR</h1>
+                <p class="text-xs font-light tracking-widest opacity-60 uppercase mt-1">Real-time PM 2.5</p>
+            </div>
+            <button id="refresh-btn" onclick="fetchAirQuality()" class="w-10 h-10 rounded-full glass-panel flex items-center justify-center hover:bg-white/20 transition-all active:scale-95">
+                <svg id="refresh-icon" class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+            </button>
+        </header>
+
+        <!-- 主视觉区 (全国平均) -->
+        <main class="flex-1 flex flex-col items-center justify-start mt-4 z-10 w-full">
+            
+            <!-- 环形数据展示器 (支持点击重置为全国) -->
+            <div onclick="selectRegion('national')" title="Click to reset to National Avg" class="relative w-64 h-64 rounded-full flex items-center justify-center ring-glow border border-white/10 glass-panel mb-8 cursor-pointer group hover:bg-white/5 transition-all">
+                <!-- 内部修饰环 -->
+                <div class="absolute inset-2 rounded-full border border-white/5 backdrop-blur-sm group-hover:scale-[0.98] transition-transform"></div>
+                <div class="absolute inset-4 rounded-full border border-white/5 border-dashed opacity-50 spin-slow" style="animation-duration: 20s;"></div>
+                
+                <div class="flex flex-col items-center justify-center z-10 backdrop-blur-md rounded-full p-4">
+                    <span id="main-display-label" class="text-sm font-light tracking-widest opacity-70 mb-1 uppercase">National Avg</span>
+                    <div class="flex items-start">
+                        <span id="national-value" class="text-7xl font-bold tracking-tighter glow-text transition-all duration-300">--</span>
+                        <span class="text-lg font-medium opacity-60 mt-2 ml-1">µg</span>
+                    </div>
+                    <!-- 状态胶囊 -->
+                    <div id="national-status" class="mt-3 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wider bg-white/20 border border-white/30 backdrop-blur-md transition-all duration-500">
+                        Loading...
+                    </div>
+                </div>
+            </div>
+
+            <!-- 更新时间 -->
+            <div class="glass-panel px-5 py-2 rounded-full mb-10 border border-white/10">
+                <p id="update-time" class="text-[11px] font-medium tracking-widest opacity-70 uppercase flex items-center">
+                    <span class="w-2 h-2 rounded-full bg-green-400 mr-2 pulse-fast" id="live-dot"></span>
+                    Updated: --:--
+                </p>
+            </div>
+
+            <!-- 各区域数据列表 -->
+            <div class="w-full">
+                <h2 class="text-sm font-light tracking-widest opacity-60 uppercase mb-4 pl-1">Regional Breakdown</h2>
+                
+                <div class="grid grid-cols-2 gap-4 w-full">
+                    
+                    <!-- 北部 -->
+                    <div id="card-north" onclick="selectRegion('north')" class="glass-panel rounded-2xl p-4 flex flex-col justify-between relative overflow-hidden group hover:bg-white/20 transition-all cursor-pointer ring-2 ring-transparent">
+                        <div class="absolute top-0 right-0 w-16 h-16 bg-white/5 rounded-bl-full z-0"></div>
+                        <span class="text-xs font-medium tracking-wider opacity-60 uppercase z-10 mb-3">North</span>
+                        <div class="flex items-end justify-between z-10">
+                            <span id="north-value" class="text-3xl font-bold region-val">--</span>
+                            <span id="north-badge" class="text-[10px] font-bold px-2 py-1 rounded-md bg-white/10 border border-white/10">--</span>
+                        </div>
+                    </div>
+
+                    <!-- 南部 -->
+                    <div id="card-south" onclick="selectRegion('south')" class="glass-panel rounded-2xl p-4 flex flex-col justify-between relative overflow-hidden group hover:bg-white/20 transition-all cursor-pointer ring-2 ring-transparent">
+                        <div class="absolute top-0 right-0 w-16 h-16 bg-white/5 rounded-bl-full z-0"></div>
+                        <span class="text-xs font-medium tracking-wider opacity-60 uppercase z-10 mb-3">South</span>
+                        <div class="flex items-end justify-between z-10">
+                            <span id="south-value" class="text-3xl font-bold region-val">--</span>
+                            <span id="south-badge" class="text-[10px] font-bold px-2 py-1 rounded-md bg-white/10 border border-white/10">--</span>
+                        </div>
+                    </div>
+
+                    <!-- 东部 -->
+                    <div id="card-east" onclick="selectRegion('east')" class="glass-panel rounded-2xl p-4 flex flex-col justify-between relative overflow-hidden group hover:bg-white/20 transition-all cursor-pointer ring-2 ring-transparent">
+                        <div class="absolute top-0 right-0 w-16 h-16 bg-white/5 rounded-bl-full z-0"></div>
+                        <span class="text-xs font-medium tracking-wider opacity-60 uppercase z-10 mb-3">East</span>
+                        <div class="flex items-end justify-between z-10">
+                            <span id="east-value" class="text-3xl font-bold region-val">--</span>
+                            <span id="east-badge" class="text-[10px] font-bold px-2 py-1 rounded-md bg-white/10 border border-white/10">--</span>
+                        </div>
+                    </div>
+
+                    <!-- 西部 -->
+                    <div id="card-west" onclick="selectRegion('west')" class="glass-panel rounded-2xl p-4 flex flex-col justify-between relative overflow-hidden group hover:bg-white/20 transition-all cursor-pointer ring-2 ring-transparent">
+                        <div class="absolute top-0 right-0 w-16 h-16 bg-white/5 rounded-bl-full z-0"></div>
+                        <span class="text-xs font-medium tracking-wider opacity-60 uppercase z-10 mb-3">West</span>
+                        <div class="flex items-end justify-between z-10">
+                            <span id="west-value" class="text-3xl font-bold region-val">--</span>
+                            <span id="west-badge" class="text-[10px] font-bold px-2 py-1 rounded-md bg-white/10 border border-white/10">--</span>
+                        </div>
+                    </div>
+
+                    <!-- 中部 (占据整行) -->
+                    <div id="card-central" onclick="selectRegion('central')" class="col-span-2 glass-panel rounded-2xl p-4 flex items-center justify-between relative overflow-hidden group hover:bg-white/20 transition-all mt-1 cursor-pointer ring-2 ring-transparent">
+                        <div class="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white/5 to-transparent z-0"></div>
+                        <div class="flex flex-col z-10">
+                            <span class="text-xs font-medium tracking-wider opacity-60 uppercase mb-1">Central</span>
+                            <span id="central-badge" class="text-[10px] font-bold px-2 py-1 rounded-md bg-white/10 border border-white/10 w-max mt-1">--</span>
+                        </div>
+                        <span id="central-value" class="text-4xl font-bold region-val z-10 pr-2">--</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-10 mb-4 opacity-40 text-[10px] tracking-widest uppercase font-light text-center w-full">
+                Data provided by Data.gov.sg
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const API_URL = 'https://api.data.gov.sg/v1/environment/pm25';
+        
+        // 高精度的低多边形 (Low-poly) 新加坡地图坐标，完美贴合5个区域及海岸线特征
+        const sgGeoJson = {
+            "type": "FeatureCollection",
+            "features": [
+                { "type": "Feature", "properties": { "name": "north", "center": [103.80, 1.43] }, "geometry": { "type": "Polygon", "coordinates": [[[103.70, 1.44], [103.75, 1.46], [103.79, 1.47], [103.82, 1.47], [103.86, 1.44], [103.88, 1.42], [103.85, 1.38], [103.76, 1.38], [103.70, 1.44]]] } },
+                { "type": "Feature", "properties": { "name": "east", "center": [103.95, 1.36] }, "geometry": { "type": "Polygon", "coordinates": [[[103.88, 1.42], [103.92, 1.41], [103.95, 1.39], [104.00, 1.40], [104.04, 1.36], [104.01, 1.31], [103.93, 1.30], [103.90, 1.30], [103.89, 1.32], [103.85, 1.38], [103.88, 1.42]]] } },
+                { "type": "Feature", "properties": { "name": "central", "center": [103.82, 1.35] }, "geometry": { "type": "Polygon", "coordinates": [[[103.76, 1.38], [103.85, 1.38], [103.89, 1.32], [103.84, 1.30], [103.80, 1.31], [103.76, 1.32], [103.76, 1.38]]] } },
+                { "type": "Feature", "properties": { "name": "south", "center": [103.82, 1.28] }, "geometry": { "type": "Polygon", "coordinates": [[[103.74, 1.28], [103.78, 1.26], [103.82, 1.24], [103.86, 1.27], [103.88, 1.29], [103.89, 1.32], [103.84, 1.30], [103.80, 1.31], [103.76, 1.32], [103.74, 1.28]]] } },
+                { "type": "Feature", "properties": { "name": "west", "center": [103.68, 1.34] }, "geometry": { "type": "Polygon", "coordinates": [[[103.70, 1.44], [103.76, 1.38], [103.76, 1.32], [103.74, 1.28], [103.71, 1.29], [103.68, 1.25], [103.64, 1.26], [103.61, 1.28], [103.60, 1.34], [103.63, 1.38], [103.67, 1.41], [103.70, 1.44]]] } }
+            ]
+        };
+
+        let svg, projection, path, marker, markerOuter;
+        let currentReadings = null;
+        let activeRegion = 'national';
+        let worstRegionGlobal = 'central';
+
+        function initMap() {
+            const container = document.getElementById('map-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            svg = d3.select("#map-container")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height);
+
+            // 投影设置，缩小地图比例使其完全可见
+            projection = d3.geoMercator()
+                .center([103.82, 1.355]) // 居中新坐标
+                .scale(width * 90)       // 从 140 缩小到 90
+                .translate([width / 2, height / 2.2]); // 略微上移居中
+
+            path = d3.geoPath().projection(projection);
+
+            // 绘制地图区域
+            svg.selectAll(".region-path")
+                .data(sgGeoJson.features)
+                .enter()
+                .append("path")
+                .attr("class", "region-path map-pulse")
+                .attr("id", d => `map-${d.properties.name}`)
+                .attr("d", path);
+
+            // 添加浮动指示器 (Marker)
+            const markerGroup = svg.append("g")
+                .attr("class", "floating-marker")
+                .attr("id", "status-marker")
+                .attr("transform", `translate(${width/2}, ${height/2})`); // 初始居中
+
+            // 指示器外环涟漪
+            markerOuter = markerGroup.append("circle")
+                .attr("r", 25)
+                .attr("fill", "rgba(255,255,255,0.1)")
+                .attr("stroke", "rgba(255,255,255,0.5)")
+                .attr("stroke-width", 1.5)
+                .style("animation", "pulse-op 2s infinite");
+
+            // 指示器中心点
+            marker = markerGroup.append("circle")
+                .attr("r", 8)
+                .attr("fill", "#fff")
+                .attr("box-shadow", "0 0 10px #fff");
+                
+            // 添加 resize 监听器，自适应地图大小
+            window.addEventListener('resize', () => {
+                const newWidth = container.clientWidth;
+                const newHeight = container.clientHeight;
+                svg.attr("width", newWidth).attr("height", newHeight);
+                projection.scale(newWidth * 90).translate([newWidth / 2, newHeight / 2.2]);
+                svg.selectAll(".region-path").attr("d", path);
+                // 这里暂不重置 marker 位置，等待下一次数据刷新
+            });
+        }
+
+        // 评级标准辅助函数 (基于新加坡 NEA 标准)
+        // 动态返回背景渐变色组合和文字描述
+        function getAirQualityTheme(value) {
+            if (value <= 55) return { 
+                label: 'Normal', 
+                themeId: 'bg-theme-normal',
+                statusColor: 'text-emerald-300',
+                dotColor: 'bg-emerald-400'
+            };
+            if (value <= 150) return { 
+                label: 'Elevated', 
+                themeId: 'bg-theme-elevated',
+                statusColor: 'text-amber-300',
+                dotColor: 'bg-amber-400'
+            };
+            if (value <= 250) return { 
+                label: 'High', 
+                themeId: 'bg-theme-high',
+                statusColor: 'text-red-300',
+                dotColor: 'bg-red-500'
+            };
+            return { 
+                label: 'Very High', 
+                themeId: 'bg-theme-veryhigh',
+                statusColor: 'text-purple-300',
+                dotColor: 'bg-purple-500'
+            };
+        }
+
+        // 切换全屏背景颜色 (平滑过渡)
+        function setGlobalTheme(activeThemeId) {
+            const themes = ['bg-theme-normal', 'bg-theme-elevated', 'bg-theme-high', 'bg-theme-veryhigh'];
+            themes.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (id === activeThemeId) {
+                    el.classList.remove('opacity-0');
+                    el.classList.add('opacity-100');
+                } else {
+                    el.classList.remove('opacity-100');
+                    el.classList.add('opacity-0');
+                }
+            });
+        }
+
+        // 格式化时间
+        function formatTime(isoString) {
+            const date = new Date(isoString);
+            let hours = date.getHours();
+            let minutes = date.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; 
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            return `${hours}:${minutes} ${ampm}`;
+        }
+
+        function setLoadingState(isLoading) {
+            const refreshIcon = document.getElementById('refresh-icon');
+            const values = document.querySelectorAll('.region-val, #national-value');
+            
+            if (isLoading) {
+                refreshIcon.classList.add('spin-slow');
+                values.forEach(v => {
+                    v.style.opacity = '0.2';
+                });
+                document.getElementById('national-status').innerText = 'Syncing...';
+            } else {
+                refreshIcon.classList.remove('spin-slow');
+                values.forEach(v => {
+                    v.style.opacity = '1';
+                });
+            }
+        }
+
+        // 提取独立的移动地图标记函数
+        function moveMarker(region, value) {
+            const targetFeature = sgGeoJson.features.find(f => f.properties.name === region);
+            if (targetFeature && projection) {
+                const [cx, cy] = projection(targetFeature.properties.center);
+                
+                let markerColor = "#34d399"; // emerald-400
+                if (value > 55) markerColor = "#fbbf24"; // amber-400
+                if (value > 150) markerColor = "#ef4444"; // red-500
+                if (value > 250) markerColor = "#a855f7"; // purple-500
+                
+                // 动画移动指示器
+                d3.select("#status-marker")
+                    .transition()
+                    .duration(1000)
+                    .attr("transform", `translate(${cx}, ${cy})`);
+                
+                marker.transition().duration(800).attr("fill", markerColor);
+                markerOuter.transition().duration(800)
+                    .attr("stroke", markerColor)
+                    .attr("fill", markerColor.replace(')', ', 0.2)').replace('rgb', 'rgba'));
+            }
+        }
+
+        // 响应卡片点击：切换主视图的显示区域
+        function selectRegion(region) {
+            if (!currentReadings) return;
+            activeRegion = region;
+            
+            const value = currentReadings[region];
+            const theme = getAirQualityTheme(value);
+            
+            // 触发全屏背景颜色平滑过渡，匹配当前选中的区域污染级别
+            setGlobalTheme(theme.themeId);
+
+            // 更新中心环文字
+            document.getElementById('main-display-label').innerText = region === 'national' ? 'National Avg' : `${region} Region`;
+            
+            // 加入短暂的透明度动画切换数字
+            const valEl = document.getElementById('national-value');
+            valEl.style.opacity = '0';
+            setTimeout(() => {
+                valEl.innerText = value;
+                valEl.style.opacity = '1';
+            }, 150);
+            
+            const statusEl = document.getElementById('national-status');
+            statusEl.innerText = theme.label;
+            statusEl.className = statusEl.className.replace(/text-\w+-\d+/g, '');
+            statusEl.classList.add(theme.statusColor);
+
+            // 更新地图指示器 (选中全国时指向最严重区域)
+            if (region === 'national') {
+                moveMarker(worstRegionGlobal, currentReadings[worstRegionGlobal]);
+            } else {
+                moveMarker(region, value);
+            }
+
+            // 更新卡片的聚焦高亮状态
+            const regions = ['north', 'south', 'east', 'west', 'central'];
+            regions.forEach(r => {
+                const card = document.getElementById(`card-${r}`);
+                if (!card) return;
+                if (r === region) {
+                    card.classList.add('bg-white/20', 'ring-white/50');
+                    card.classList.remove('ring-transparent');
+                } else {
+                    card.classList.remove('bg-white/20', 'ring-white/50');
+                    card.classList.add('ring-transparent');
+                }
+            });
+        }
+
+        async function fetchAirQuality() {
+            setLoadingState(true);
+            
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const data = await response.json();
+                
+                if (data.items && data.items.length > 0) {
+                    const latestData = data.items[0];
+                    const timestamp = latestData.update_timestamp || latestData.timestamp;
+                    const readings = latestData.readings.pm25_one_hourly;
+                    
+                    updateUI(readings, timestamp);
+                }
+            } catch (error) {
+                console.error("Fetch error:", error);
+                document.getElementById('national-status').innerText = 'Offline';
+                document.getElementById('national-status').classList.add('text-red-400');
+                document.getElementById('live-dot').classList.replace('bg-green-400', 'bg-red-500');
+            } finally {
+                setTimeout(() => setLoadingState(false), 600);
+            }
+        }
+
+        function updateUI(readings, timestamp) {
+            // 修复 API 返回中没有 national 数据而导致的 undefined 问题
+            if (readings.national === undefined) {
+                // 计算 5 个区域的平均值作为 national
+                readings.national = Math.round((readings.north + readings.south + readings.east + readings.west + readings.central) / 5);
+            }
+            currentReadings = readings;
+
+            // 1. 全局背景主题 (总是基于全国平均)
+            const nationalValue = readings.national;
+            const theme = getAirQualityTheme(nationalValue);
+            
+            // 更新呼吸灯颜色
+            const liveDot = document.getElementById('live-dot');
+            liveDot.className = liveDot.className.replace(/bg-\w+-\d+/g, '');
+            liveDot.classList.add(theme.dotColor, 'pulse-fast');
+
+            // 更新时间
+            document.getElementById('update-time').innerHTML = `<span class="w-2 h-2 rounded-full ${theme.dotColor} mr-2 pulse-fast" id="live-dot"></span>Updated: ${formatTime(timestamp)}`;
+
+            // 2. 更新各区域数据并寻找最高污染区域
+            const regions = ['north', 'south', 'east', 'west', 'central'];
+            let maxVal = -1;
+            let worstRegion = 'central';
+            
+            regions.forEach(region => {
+                const value = readings[region];
+                const regionTheme = getAirQualityTheme(value);
+                
+                document.getElementById(`${region}-value`).innerText = value;
+                
+                const badgeEl = document.getElementById(`${region}-badge`);
+                badgeEl.innerText = regionTheme.label;
+                
+                // 设置徽章颜色
+                badgeEl.className = badgeEl.className.replace(/text-\w+-\d+/g, '');
+                badgeEl.classList.add(regionTheme.statusColor);
+                
+                // 更新地图上的区域颜色
+                let fillColor = "rgba(255,255,255,0.05)";
+                if (value > 55 && value <= 150) fillColor = "rgba(251, 191, 36, 0.2)"; // amber
+                if (value > 150 && value <= 250) fillColor = "rgba(248, 113, 113, 0.3)"; // red
+                if (value > 250) fillColor = "rgba(192, 132, 252, 0.4)"; // purple
+                
+                d3.select(`#map-${region}`)
+                    .transition().duration(1000)
+                    .style("fill", fillColor)
+                    .style("stroke", regionTheme.statusColor.replace('text-', '').replace('-300', '')); // 简化提取颜色名用于边框
+                
+                // 找出最严重的区域
+                if (value > maxVal) {
+                    maxVal = value;
+                    worstRegion = region;
+                }
+            });
+
+            worstRegionGlobal = worstRegion;
+
+            // 3. 应用当前选中的区域到主显示区和地图 (刷新UI用)
+            selectRegion(activeRegion);
+        }
+
+        window.onload = () => {
+            initMap();
+            fetchAirQuality();
+            // 每 15 分钟自动刷新
+            setInterval(fetchAirQuality, 900000);
+        };
+    </script>
+</body>
+</html>
