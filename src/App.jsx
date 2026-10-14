@@ -22,7 +22,7 @@ function getAirQualityTheme(value) {
   if (value <= 55) return { label: 'Normal', themeId: 'normal', chip: 'bg-emerald-500/15 border-emerald-300/20 text-emerald-100', dot: 'bg-emerald-300', color: '#34d399' };
   if (value <= 150) return { label: 'Elevated', themeId: 'elevated', chip: 'bg-yellow-400/15 border-yellow-200/20 text-yellow-300', dot: 'bg-yellow-400', color: '#facc15' };
   if (value <= 250) return { label: 'High', themeId: 'high', chip: 'bg-rose-300/15 border-rose-200/20 text-rose-200', dot: 'bg-rose-400', color: '#fb7185' };
-  return { label: 'Very High', themeId: 'veryhigh', chip: 'bg-rose-500/15 border-rose-300/25 text-rose-100', dot: 'bg-rose-500', color: '#f43f5e' };
+  return { label: 'Very High', themeId: 'veryhigh', chip: 'bg-violet-400/15 border-violet-200/20 text-violet-200', dot: 'bg-violet-400', color: '#c084fc' };
 }
 
 function formatTime(isoString) {
@@ -254,7 +254,7 @@ function App() {
       const theme = getAirQualityTheme(readings[region]);
       map.svg.select(`#map-${region}`).transition().duration(1000)
         .style('fill', theme.color)
-        .style('fill-opacity', 0.32)
+        .style('fill-opacity', 0.58)
         .style('stroke', theme.color);
     });
     const markerRegion = activeRegion === 'national' ? worstRegion : activeRegion;
@@ -267,6 +267,12 @@ function App() {
   }, [readings, activeRegion, worstRegion]);
 
   return <div className="min-h-screen relative flex flex-col items-center">
+    <div className="theme-backgrounds" aria-hidden="true">
+      <div className="theme-background theme-bg-normal" />
+      <div className="theme-background theme-bg-elevated" />
+      <div className="theme-background theme-bg-high" />
+      <div className="theme-background theme-bg-veryhigh" />
+    </div>
     {(pullDistance > 0 || pullRefreshing) && <div
       className={`pull-refresh-indicator glass-panel ${pullRefreshing ? 'is-refreshing' : 'is-pulling'}`}
       style={{ transform: `translate(-50%, calc(-100% + ${pullOffset}px))` }}
