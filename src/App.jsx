@@ -22,7 +22,7 @@ function getAirQualityTheme(value) {
   if (value <= 55) return { label: 'Normal', themeId: 'normal', chip: 'bg-emerald-500/15 border-emerald-300/20 text-emerald-100', dot: 'bg-emerald-300', color: '#34d399' };
   if (value <= 150) return { label: 'Elevated', themeId: 'elevated', chip: 'bg-yellow-400/15 border-yellow-200/20 text-yellow-300', dot: 'bg-yellow-400', color: '#facc15' };
   if (value <= 250) return { label: 'High', themeId: 'high', chip: 'bg-rose-300/15 border-rose-200/20 text-rose-200', dot: 'bg-rose-400', color: '#fb7185' };
-  return { label: 'Very High', themeId: 'veryhigh', chip: 'bg-violet-400/15 border-violet-200/20 text-violet-200', dot: 'bg-violet-400', color: '#c084fc' };
+  return { label: 'Very High', themeId: 'veryhigh', chip: 'bg-rose-500/15 border-rose-300/25 text-rose-100', dot: 'bg-rose-500', color: '#f43f5e' };
 }
 
 function formatTime(isoString) {

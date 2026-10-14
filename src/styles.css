@@ -16,7 +16,7 @@ html {
 }
 html[data-air-theme="normal"] { --page-background: #064e3b; --status-background: #097054; }
 html[data-air-theme="elevated"] { --page-background: #57340d; --status-background: #7d4a13; }
-html[data-air-theme="veryhigh"] { --page-background: #451c63; --status-background: #63288e; }
+html[data-air-theme="veryhigh"] { --page-background: #4c0519; --status-background: #881337; }
 #root { min-height: 100%; background-color: var(--page-background); }
 #root::before {
   content: '';
