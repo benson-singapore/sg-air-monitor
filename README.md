@@ -2,7 +2,18 @@
 
 [简体中文](README.zh-CN.md)
 
-SG Air is a responsive, installable web app for viewing Singapore's latest PM2.5 readings. It shows the national average and readings for the North, South, East, West, and Central regions. Select a regional card to focus the map and main reading on that region; select the main reading to return to the national average.
+SG Air is a responsive air-quality dashboard for checking the latest PM2.5 readings across Singapore. It brings the national average, five regional readings, and a geographic overview together in a compact interface designed for quick checks on mobile and desktop.
+
+The experience pairs clear numeric readings with regional status labels, a color-coded map, and a calm glass-panel visual style. Its SG Air identity is carried through a custom SVG mark and a coordinated set of browser, PWA, and Apple touch icons.
+
+## Highlights
+
+- **National and regional overview:** See the national average alongside readings for the North, South, East, West, and Central regions.
+- **Interactive regional map:** Select a regional card to focus the main reading and map marker on that area. Select the main reading to return to the national view.
+- **At-a-glance status:** Readings are grouped into Normal, Elevated, High, and Very High bands. Map colors, status chips, and the page theme respond to the selected reading.
+- **Responsive interface:** The dashboard adapts to narrow screens and larger displays, with compact region cards and a dedicated national summary.
+- **Clear connection state:** Loading, syncing, and offline states help explain when readings are being retrieved or unavailable.
+- **Installable and resilient shell:** A web manifest and service worker support home-screen installation and cache the app shell for return visits. Live readings still require a network connection.
 
 ## Data
 
@@ -29,6 +40,18 @@ npm run preview
 ## Install as an app
 
 The app includes a web manifest and service worker. Open it in a supported browser and use the browser's **Install app** or **Add to Home Screen** option. Previously loaded app files can be served from cache when offline; live PM2.5 readings still require a network connection.
+
+## Brand and app icons
+
+SG Air uses a small, coordinated icon set so its identity stays recognizable in the page header, browser chrome, and on a device home screen:
+
+- `public/icons/air-logo.svg` — scalable SVG mark used in the dashboard header and as the SVG favicon
+- `public/icons/sg-air-icon-192.png` — standard 192 × 192 browser and app icon
+- `public/icons/sg-air-icon-512.png` — 512 × 512 PWA icon, configured for standard and maskable use
+- `public/icons/apple-touch-icon.png` — icon for adding SG Air to an Apple device's home screen
+- `public/sg-air-lockup.png` — SG Air logo lockup asset
+- `public/icons/sg-air-icon-source.png` — source artwork for the app icon
+- `docs/sg-air-logo-options.png` — logo direction reference sheet
 
 ## Project structure
 
