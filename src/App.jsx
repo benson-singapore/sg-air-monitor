@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 
 const API_URL = 'https://api.data.gov.sg/v1/environment/pm25';
+const IOS_PROFILE_INSTALL_URL = 'https://ios-webclip-install-app-tools.pages.dev/install?id=conf_1791970671898';
 const REGION_NAMES = ['north', 'south', 'east', 'west', 'central'];
 const REGION_LABELS = { north: 'North', south: 'South', east: 'East', west: 'West', central: 'Central' };
 const GEOJSON = {
@@ -47,7 +48,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [offline, setOffline] = useState(false);
   const [installPrompt, setInstallPrompt] = useState(null);
-  const [isInstalled, setIsInstalled] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(() => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true);
   const [showInstallHelp, setShowInstallHelp] = useState(false);
 
   useEffect(() => {
@@ -72,6 +73,15 @@ function App() {
   }, []);
 
   const installApp = async () => {
+    const isIOS = /iPhone|iPad|iPod/i.test(window.navigator.userAgent)
+      || (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
+    if (isIOS) {
+      const profileWindow = window.open(IOS_PROFILE_INSTALL_URL, '_blank');
+      if (profileWindow) profileWindow.opener = null;
+      else window.location.assign(IOS_PROFILE_INSTALL_URL);
+      setShowInstallHelp(true);
+      return;
+    }
     if (!installPrompt) {
       setShowInstallHelp(true);
       return;
@@ -209,14 +219,14 @@ function InstallHelpDialog({ onClose }) {
   const userAgent = window.navigator.userAgent;
   const isIOS = /iPhone|iPad|iPod/i.test(userAgent) || (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
   const instructions = isIOS
-    ? 'In Safari, tap Share, then choose “Add to Home Screen”.'
+    ? 'The SG Air installation profile is opening. If iOS asks, tap Allow to download it. Then open Settings, tap Profile Downloaded, choose Install, and follow the on-screen steps.'
     : /Android/i.test(userAgent)
       ? 'Open your browser menu and choose “Install app” or “Add to Home screen”.'
       : 'Open your browser menu and choose “Install SG Air” or “Install page as app”.';
 
   return <div className="install-dialog-backdrop fixed inset-0 z-50 flex items-center justify-center p-6" onClick={onClose}>
     <section className="glass-panel w-full max-w-sm rounded-3xl border border-white/15 p-6 text-white" role="dialog" aria-modal="true" aria-labelledby="install-help-title" onClick={(event) => event.stopPropagation()}>
-      <h2 id="install-help-title" className="text-lg font-semibold tracking-wide">Install SG Air</h2>
+      <h2 id="install-help-title" className="text-lg font-semibold tracking-wide">{isIOS ? 'Finish installing SG Air' : 'Install SG Air'}</h2>
       <p className="mt-3 text-sm leading-relaxed text-white/70">{instructions}</p>
       <button onClick={onClose} className="mt-5 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm text-white hover:bg-white/15">Got it</button>
     </section>
