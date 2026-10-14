@@ -155,7 +155,7 @@ function App() {
 
   useEffect(() => {
     const onTouchStart = (event) => {
-      if (loading || event.touches.length !== 1 || window.scrollY > 0) {
+      if (loading || showInstallHelp || event.touches.length !== 1 || window.scrollY > 0) {
         pullStart.current = null;
         return;
       }
@@ -171,11 +171,13 @@ function App() {
       const deltaY = event.touches[0].clientY - pullStart.current.y;
       if (Math.abs(deltaX) > Math.abs(deltaY) || window.scrollY > 0) {
         pullStart.current = null;
+        pullDistanceRef.current = 0;
+        setPullDistance(0);
         return;
       }
-      if (deltaY > 0) {
+      if (deltaY > 0 || pullDistanceRef.current > 0) {
         if (event.cancelable) event.preventDefault();
-        const distance = Math.min(deltaY * 0.8, 96);
+        const distance = Math.max(0, Math.min(deltaY * 0.8, 96));
         pullDistanceRef.current = distance;
         setPullDistance(distance);
       }
@@ -208,7 +210,7 @@ function App() {
       document.removeEventListener('touchend', finishPull);
       document.removeEventListener('touchcancel', cancelPull);
     };
-  }, [loading, refresh]);
+  }, [loading, refresh, showInstallHelp]);
 
   useEffect(() => {
     const container = mapContainer.current;
@@ -266,15 +268,15 @@ function App() {
 
   return <div className="min-h-screen relative flex flex-col items-center">
     {(pullDistance > 0 || pullRefreshing) && <div
-      className={`pull-refresh-indicator glass-panel ${pullRefreshing ? 'is-refreshing' : ''}`}
-      style={{ transform: `translate(-50%, calc(-100% + ${pullRefreshing ? PULL_TO_REFRESH_DISTANCE : pullDistance}px))` }}
+      className={`pull-refresh-indicator glass-panel ${pullRefreshing ? 'is-refreshing' : 'is-pulling'}`}
+      style={{ transform: `translate(-50%, calc(-100% + ${pullOffset}px))` }}
       role="status"
       aria-live="polite"
     >
       <span className={pullRefreshing ? 'spin-slow' : ''}><RefreshIcon /></span>
       <span>{pullRefreshing ? 'Refreshing…' : pullDistance >= PULL_TO_REFRESH_DISTANCE ? 'Release to refresh' : 'Pull to refresh'}</span>
     </div>}
-    <div className="app-content w-full max-w-md min-h-screen flex flex-col relative px-6 py-8">
+    <div className={`app-content w-full max-w-md min-h-screen flex flex-col relative px-6 py-8 ${pullDistance > 0 ? 'is-pulling' : ''}`} style={pullOffset ? { transform: `translate3d(0, ${pullOffset}px, 0)` } : undefined}>
       <header className="topbar flex items-center justify-between mb-5 w-full z-10 gap-2">
         <div className="topbar-brand min-w-0 flex items-center gap-3"><img src="/icons/air-logo.svg" alt="SG AIR" className="h-10 w-10 rounded-lg bg-white" /><div><h1 className="text-2xl font-bold tracking-wider opacity-90">SG AIR</h1><p className="brand-caption text-[9px] font-light tracking-[0.12em] opacity-60 uppercase mt-1 whitespace-nowrap">Real-time PM 2.5</p></div></div>
         <button onClick={refresh} aria-label="Refresh air quality" className="justify-self-end w-10 h-10 rounded-full glass-panel flex items-center justify-center hover:bg-white/15 transition-all active:scale-95">

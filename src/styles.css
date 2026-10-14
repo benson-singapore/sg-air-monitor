@@ -30,7 +30,8 @@ html[data-air-theme="veryhigh"] { --page-background: #451c63; --status-backgroun
 }
 html[data-ios-standalone="true"] #root::before { display: block; }
 .app-content.min-h-screen { padding-top: calc(2rem + env(safe-area-inset-top)); }
-.app-content { z-index: 1; }
+.app-content { z-index: 1; transition: transform .36s cubic-bezier(.2,.8,.2,1); }
+.app-content.is-pulling { transition: none; will-change: transform; }
 .pull-refresh-indicator {
   position: fixed;
   top: calc(env(safe-area-inset-top, 0px) + 8px);
@@ -49,6 +50,7 @@ html[data-ios-standalone="true"] #root::before { display: block; }
   transition: transform .16s ease-out;
 }
 .pull-refresh-indicator svg { width: 15px; height: 15px; }
+.pull-refresh-indicator.is-pulling { transition: none; }
 .pull-refresh-indicator.is-refreshing { border-color: rgba(255,255,255,.22); }
 
 button { font-family: inherit; }
