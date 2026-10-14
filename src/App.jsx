@@ -60,6 +60,9 @@ function App() {
   useEffect(() => {
     const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     setIsInstalled(standalone);
+    const isIOS = /iPhone|iPad|iPod/i.test(window.navigator.userAgent)
+      || (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
+    document.documentElement.dataset.iosStandalone = String(isIOS && standalone);
 
     const captureInstallPrompt = (event) => {
       event.preventDefault();
@@ -235,6 +238,13 @@ function App() {
   const nationalValue = readings?.national;
   const activeValue = activeRegion === 'national' ? nationalValue : readings?.[activeRegion];
   const activeTheme = getAirQualityTheme(activeValue);
+  const pullOffset = pullRefreshing ? 48 : pullDistance;
+  useEffect(() => {
+    document.documentElement.dataset.airTheme = activeTheme.themeId || 'high';
+    const pageColor = getComputedStyle(document.documentElement).getPropertyValue('--page-background').trim();
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', pageColor);
+  }, [activeTheme.themeId]);
+
   useEffect(() => {
     const map = mapApi.current;
     if (!map || !readings) return;

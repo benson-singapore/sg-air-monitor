@@ -2,23 +2,33 @@ body {
   font-family: 'Outfit', system-ui, -apple-system, sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #641f27;
+  background-color: var(--page-background);
   color: #fff;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
-html { min-height: 100%; background-color: #641f27; }
-#root { min-height: 100%; background-color: #641f27; }
+html {
+  min-height: 100%;
+  --page-background: #641f27;
+  --status-background: #8f2c38;
+  background-color: var(--page-background);
+}
+html[data-air-theme="normal"] { --page-background: #064e3b; --status-background: #097054; }
+html[data-air-theme="elevated"] { --page-background: #57340d; --status-background: #7d4a13; }
+html[data-air-theme="veryhigh"] { --page-background: #451c63; --status-background: #63288e; }
+#root { min-height: 100%; background-color: var(--page-background); }
 #root::before {
   content: '';
+  display: none;
   position: fixed;
   z-index: 0;
   inset: 0 0 auto;
   height: env(safe-area-inset-top, 0px);
-  background-color: #84333c;
+  background-color: var(--status-background);
   pointer-events: none;
 }
+html[data-ios-standalone="true"] #root::before { display: block; }
 .app-content.min-h-screen { padding-top: calc(2rem + env(safe-area-inset-top)); }
 .app-content { z-index: 1; }
 .pull-refresh-indicator {
