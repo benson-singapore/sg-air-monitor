@@ -2,7 +2,7 @@
   "id": "/",
   "name": "SG Air — Singapore PM2.5 Monitor",
   "short_name": "SG Air",
-  "description": "Real-time PM2.5 air quality across Singapore.",
+  "description": "Real-time PM2.5 readings and regional air quality data for Singapore.",
   "lang": "en-SG",
   "start_url": "/",
   "scope": "/",
