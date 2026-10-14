@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 403 403" role="img" aria-labelledby="title">
+  <title id="title">SG AIR</title>
+  <rect width="403" height="403" fill="#fff"/>
+  <g transform="translate(0 15) scale(1 .78)">
+    <path fill="#006444" d="M137 213c21-35 46-98 60-120 9-13 23-10 31 2 11 15 19 29 27 41-14-7-29-11-43-2-24 17-51 56-75 79Z"/>
+    <path fill="#59c77f" d="M66 220c16 17 30 22 49 16 40-12 71-42 103-64 21-15 40-30 54-27 22 4 37 40 55 81-22-20-35-43-55-47-22-5-43 15-66 31-35 25-67 53-101 58-18 2-33-15-39-48Z"/>
+    <path fill="#006444" d="M73 295c36 1 66-12 95-32 28-19 54-42 81-59 24-15 41-16 54-3 18 18 28 45 40 75-17-16-29-38-46-41-16-4-34 8-55 24-39 31-78 60-118 68-23 4-42-11-51-32Z"/>
+  </g>
+  <text x="201.5" y="360" fill="#006444" font-family="Arial Black,Arial,sans-serif" font-size="48" font-weight="900" letter-spacing="2" text-anchor="middle">SG AIR</text>
+</svg>
