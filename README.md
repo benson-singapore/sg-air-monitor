@@ -1,6 +1,20 @@
-# SG Air
+<p align="center">
+  <img src="public/sg-air-lockup.png" alt="SG Air logo" width="180" />
+</p>
 
-[简体中文](README.zh-CN.md)
+<h1 align="center">SG Air</h1>
+
+<p align="center">Singapore PM2.5, at a glance.</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/React-UI-61DAFB?logo=react&logoColor=20232A" alt="React" />
+  <img src="https://img.shields.io/badge/Vite-Tooling-646CFF?logo=vite&logoColor=white" alt="Vite" />
+  <img src="https://img.shields.io/badge/D3.js-Maps-F9A03C?logo=d3.js&logoColor=white" alt="D3.js" />
+  <img src="https://img.shields.io/badge/Web-PWA-2563EB" alt="Web and PWA" />
+  <a href="https://data.gov.sg/"><img src="https://img.shields.io/badge/Data.gov.sg-PM2.5-15803D" alt="Singapore Data.gov.sg PM2.5" /></a>
+</p>
+
+<p align="center"><a href="README.zh-CN.md">简体中文</a></p>
 
 SG Air is a responsive air-quality dashboard for checking the latest PM2.5 readings across Singapore. It brings the national average, five regional readings, and a geographic overview together in a compact interface designed for quick checks on mobile and desktop.
 

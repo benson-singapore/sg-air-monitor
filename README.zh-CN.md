@@ -1,6 +1,20 @@
-# SG Air
+<p align="center">
+  <img src="public/sg-air-lockup.png" alt="SG Air 标识" width="180" />
+</p>
 
-[English](README.md)
+<h1 align="center">SG Air</h1>
+
+<p align="center">新加坡 PM2.5 空气质量，一览即知。</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/React-界面-61DAFB?logo=react&logoColor=20232A" alt="React" />
+  <img src="https://img.shields.io/badge/Vite-开发工具-646CFF?logo=vite&logoColor=white" alt="Vite" />
+  <img src="https://img.shields.io/badge/D3.js-区域地图-F9A03C?logo=d3.js&logoColor=white" alt="D3.js" />
+  <img src="https://img.shields.io/badge/Web-PWA-2563EB" alt="网页与 PWA" />
+  <a href="https://data.gov.sg/"><img src="https://img.shields.io/badge/Data.gov.sg-PM2.5-15803D" alt="新加坡 Data.gov.sg PM2.5 数据" /></a>
+</p>
+
+<p align="center"><a href="README.md">English</a></p>
 
 SG Air 是一款响应式空气质量仪表盘，帮助用户快速查看新加坡最新的 PM2.5 数据。页面将全国平均值、五个区域的读数和区域地图整合在一起，适合在手机和桌面设备上随时查看。
 
