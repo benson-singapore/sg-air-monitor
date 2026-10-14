@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 
 const API_URL = 'https://api.data.gov.sg/v1/environment/pm25';
-const IOS_PROFILE_INSTALL_URL = 'https://ios-webclip-install-app-tools.pages.dev/install?id=conf_1791970671898';
+const IOS_PROFILE_DOWNLOAD_URL = 'https://ios-install-api.benson.in.net/install?id=conf_1791970671898';
 const REGION_NAMES = ['north', 'south', 'east', 'west', 'central'];
 const REGION_LABELS = { north: 'North', south: 'South', east: 'East', west: 'West', central: 'Central' };
 const GEOJSON = {
@@ -50,6 +50,7 @@ function App() {
   const [installPrompt, setInstallPrompt] = useState(null);
   const [isInstalled, setIsInstalled] = useState(() => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true);
   const [showInstallHelp, setShowInstallHelp] = useState(false);
+  const [installStatus, setInstallStatus] = useState('idle');
 
   useEffect(() => {
     const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
@@ -76,10 +77,26 @@ function App() {
     const isIOS = /iPhone|iPad|iPod/i.test(window.navigator.userAgent)
       || (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
     if (isIOS) {
-      const profileWindow = window.open(IOS_PROFILE_INSTALL_URL, '_blank');
-      if (profileWindow) profileWindow.opener = null;
-      else window.location.assign(IOS_PROFILE_INSTALL_URL);
+      setInstallStatus('downloading');
       setShowInstallHelp(true);
+      try {
+        const response = await fetch(IOS_PROFILE_DOWNLOAD_URL);
+        if (!response.ok) throw new Error(`Profile download failed: ${response.status}`);
+        const profile = await response.blob();
+        const downloadUrl = URL.createObjectURL(profile);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = 'SG-Air.mobileconfig';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 60_000);
+        setInstallStatus('downloaded');
+      } catch (error) {
+        console.error('Profile download error:', error);
+        setInstallStatus('error');
+      }
       return;
     }
     if (!installPrompt) {
@@ -213,16 +230,20 @@ function App() {
           <div className="opacity-40 text-[10px] tracking-widest uppercase font-light">Data provided by Data.gov.sg</div>
         </div>
       </main>
-      {showInstallHelp && <InstallHelpDialog onClose={() => setShowInstallHelp(false)} />}
+      {showInstallHelp && <InstallHelpDialog status={installStatus} onClose={() => setShowInstallHelp(false)} />}
     </div>
   </div>;
 }
 
-function InstallHelpDialog({ onClose }) {
+function InstallHelpDialog({ status, onClose }) {
   const userAgent = window.navigator.userAgent;
   const isIOS = /iPhone|iPad|iPod/i.test(userAgent) || (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
   const instructions = isIOS
-    ? 'The SG Air installation profile is opening. If iOS asks, tap Allow to download it. Then open Settings, tap Profile Downloaded, choose Install, and follow the on-screen steps.'
+    ? status === 'downloading'
+      ? 'Downloading the SG Air installation profile. Keep this page open for a moment.'
+      : status === 'error'
+        ? 'The profile could not be downloaded. Check your internet connection and try again.'
+        : 'The profile has been downloaded. Open Settings, tap Profile Downloaded, then tap Install and follow the on-screen steps.'
     : /Android/i.test(userAgent)
       ? 'Open your browser menu and choose “Install app” or “Add to Home screen”.'
       : 'Open your browser menu and choose “Install SG Air” or “Install page as app”.';

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sg-air-shell-v8';
+const CACHE_NAME = 'sg-air-shell-v9';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -30,7 +30,7 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
-  if (url.hostname === 'api.data.gov.sg') return;
+  if (url.hostname === 'api.data.gov.sg' || url.hostname === 'ios-install-api.benson.in.net') return;
 
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
