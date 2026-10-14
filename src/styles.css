@@ -2,14 +2,25 @@ body {
   font-family: 'Outfit', system-ui, -apple-system, sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #0f172a;
+  background-color: #641f27;
   color: #fff;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
 html { min-height: 100%; background-color: #641f27; }
+#root { min-height: 100%; background-color: #641f27; }
+#root::before {
+  content: '';
+  position: fixed;
+  z-index: 0;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  background-color: #84333c;
+  pointer-events: none;
+}
 .app-content.min-h-screen { padding-top: calc(2rem + env(safe-area-inset-top)); }
+.app-content { z-index: 1; }
 
 button { font-family: inherit; }
 .glass-panel { background: rgba(255,255,255,.08); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.15); box-shadow: 0 8px 32px 0 rgba(0,0,0,.2); }
@@ -50,11 +61,6 @@ button { font-family: inherit; }
 .glow-text { text-shadow: 0 0 20px rgba(255,255,255,.4); }
 .ring-glow { box-shadow: 0 0 30px rgba(255,255,255,.1), inset 0 0 20px rgba(255,255,255,.05); }
 .install-dialog-backdrop { background: rgba(15,10,12,.68); }
-body[data-air-theme="normal"] { background-color: #064e3b; background-image: none; }
-body[data-air-theme="elevated"] { background-color: #57340d; background-image: none; }
-body[data-air-theme="high"] { background-color: #641f27; background-image: none; }
-body[data-air-theme="veryhigh"] { background-color: #451c63; background-image: none; }
-
 @media (max-width: 380px) {
   .regional-heading { gap: 4px; }
   .regional-heading h2 { font-size: 11px; letter-spacing: .1em; }

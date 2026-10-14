@@ -170,13 +170,6 @@ function App() {
   const activeValue = activeRegion === 'national' ? nationalValue : readings?.[activeRegion];
   const activeTheme = getAirQualityTheme(activeValue);
   useEffect(() => {
-    document.body.dataset.airTheme = activeTheme.themeId || 'normal';
-    const pageColor = getComputedStyle(document.body).backgroundColor;
-    document.documentElement.style.backgroundColor = pageColor;
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', pageColor);
-  }, [activeTheme.themeId]);
-
-  useEffect(() => {
     const map = mapApi.current;
     if (!map || !readings) return;
     REGION_NAMES.forEach((region) => {
