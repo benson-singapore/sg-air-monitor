@@ -2,22 +2,33 @@ body {
   font-family: 'Outfit', system-ui, -apple-system, sans-serif;
   margin: 0;
   padding: 0;
-  background-color: var(--page-background);
+  min-height: 100vh;
+  background: transparent;
   color: #fff;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
-
 html {
   min-height: 100%;
-  --page-background: #641f27;
-  --status-background: #8f2c38;
-  background-color: var(--page-background);
+  --theme-start: #7f1d1d;
+  --theme-middle: #881337;
+  --theme-end: #0f172a;
+  --status-background: var(--theme-start);
+  /* iOS 26 Safari no longer reads <meta name="theme-color">; it samples a solid
+     background-color (body first, then html) to tint the status bar / toolbar.
+     The `background:` shorthand resets that color to transparent, which makes the
+     bar fall back to plain white - so set background-color and paint the gradient
+     as a background-image on top (kept in sync via --theme-start). */
+  background-color: var(--theme-start);
+  background-image: linear-gradient(135deg, var(--theme-start) 0%, var(--theme-middle) 50%, var(--theme-end) 100%);
+  background-size: 300% 300%;
+  background-attachment: fixed;
+  animation: gradientShift 15s ease infinite;
 }
-html[data-air-theme="normal"] { --page-background: #064e3b; --status-background: #097054; }
-html[data-air-theme="elevated"] { --page-background: #78350f; --status-background: #9a3412; }
-html[data-air-theme="high"] { --page-background: #7f1d1d; --status-background: #991b1b; }
-html[data-air-theme="veryhigh"] { --page-background: #581c87; --status-background: #701a75; }
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
 #root { position: relative; isolation: isolate; min-height: 100%; background: transparent; }
 #root::before {
   content: '';
@@ -30,20 +41,6 @@ html[data-air-theme="veryhigh"] { --page-background: #581c87; --status-backgroun
   pointer-events: none;
 }
 html[data-ios-standalone="true"] #root::before { display: block; }
-.theme-backgrounds { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: linear-gradient(135deg, #1e293b, #0f172a, #000); }
-.theme-background { position: absolute; inset: -10%; opacity: 0; background-size: 300% 300%; animation: gradientShift 15s ease infinite; transition: opacity 1s ease-in-out; }
-.theme-bg-normal { background-image: linear-gradient(135deg, #064e3b, #134e4a, #0f172a); }
-.theme-bg-elevated { background-image: linear-gradient(135deg, #78350f, #7c2d12, #0f172a); }
-.theme-bg-high { background-image: linear-gradient(135deg, #7f1d1d, #881337, #0f172a); }
-.theme-bg-veryhigh { background-image: linear-gradient(135deg, #581c87, #701a75, #0f172a); }
-html[data-air-theme="normal"] .theme-bg-normal,
-html[data-air-theme="elevated"] .theme-bg-elevated,
-html[data-air-theme="high"] .theme-bg-high,
-html[data-air-theme="veryhigh"] .theme-bg-veryhigh { opacity: 1; }
-@keyframes gradientShift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
 .app-content.min-h-screen { padding-top: calc(2rem + env(safe-area-inset-top)); }
 .app-content { z-index: 1; transition: transform .36s cubic-bezier(.2,.8,.2,1); }
 .app-content.is-pulling { transition: none; will-change: transform; }

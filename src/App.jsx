@@ -4,6 +4,7 @@ import * as d3 from 'd3';
 const API_URL = 'https://api.data.gov.sg/v1/environment/pm25';
 const IOS_PROFILE_DOWNLOAD_URL = 'https://ios-install-api.benson.in.net/install?id=conf_1791970671898';
 const PULL_TO_REFRESH_DISTANCE = 64;
+const THEME_TRANSITION_DURATION = 1000;
 const REGION_NAMES = ['north', 'south', 'east', 'west', 'central'];
 const REGION_LABELS = { north: 'North', south: 'South', east: 'East', west: 'West', central: 'Central' };
 const GEOJSON = {
@@ -24,6 +25,15 @@ function getAirQualityTheme(value) {
   if (value <= 250) return { label: 'High', themeId: 'high', chip: 'bg-rose-300/15 border-rose-200/20 text-rose-200', dot: 'bg-rose-400', color: '#fb7185' };
   return { label: 'Very High', themeId: 'veryhigh', chip: 'bg-violet-400/15 border-violet-200/20 text-violet-200', dot: 'bg-violet-400', color: '#c084fc' };
 }
+
+const THEME_BACKGROUND_PROPERTIES = ['--theme-start', '--theme-middle', '--theme-end'];
+const THEME_BACKGROUND_STOPS = {
+  normal: ['#064e3b', '#134e4a', '#0f172a'],
+  elevated: ['#78350f', '#7c2d12', '#0f172a'],
+  high: ['#7f1d1d', '#881337', '#0f172a'],
+  veryhigh: ['#581c87', '#701a75', '#0f172a'],
+};
+
 
 function formatTime(isoString) {
   if (!isoString) return '--:--';
@@ -242,9 +252,20 @@ function App() {
   const activeTheme = getAirQualityTheme(activeValue);
   const pullOffset = pullRefreshing ? 48 : pullDistance;
   useEffect(() => {
-    document.documentElement.dataset.airTheme = activeTheme.themeId || 'high';
-    const pageColor = getComputedStyle(document.documentElement).getPropertyValue('--page-background').trim();
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', pageColor);
+    const root = document.documentElement;
+    const themeId = activeTheme.themeId || 'high';
+    root.dataset.airTheme = themeId;
+    const targetStops = THEME_BACKGROUND_STOPS[themeId];
+    const backgroundTransition = d3.select(root)
+      .transition('theme-background')
+      .duration(THEME_TRANSITION_DURATION);
+    THEME_BACKGROUND_PROPERTIES.forEach((property, index) => {
+      backgroundTransition.style(property, targetStops[index]);
+    });
+    backgroundTransition.on('end', () => {
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', targetStops[0]);
+    });
+    return () => d3.select(root).interrupt('theme-background');
   }, [activeTheme.themeId]);
 
   useEffect(() => {
@@ -267,12 +288,6 @@ function App() {
   }, [readings, activeRegion, worstRegion]);
 
   return <div className="min-h-screen relative flex flex-col items-center">
-    <div className="theme-backgrounds" aria-hidden="true">
-      <div className="theme-background theme-bg-normal" />
-      <div className="theme-background theme-bg-elevated" />
-      <div className="theme-background theme-bg-high" />
-      <div className="theme-background theme-bg-veryhigh" />
-    </div>
     {(pullDistance > 0 || pullRefreshing) && <div
       className={`pull-refresh-indicator glass-panel ${pullRefreshing ? 'is-refreshing' : 'is-pulling'}`}
       style={{ transform: `translate(-50%, calc(-100% + ${pullOffset}px))` }}
