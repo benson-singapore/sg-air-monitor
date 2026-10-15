@@ -29,10 +29,10 @@ function getAirQualityTheme(value) {
 
 const THEME_BACKGROUND_PROPERTIES = ['--theme-start', '--theme-middle', '--theme-end'];
 const THEME_BACKGROUND_STOPS = {
-  normal: ['#064e3b', '#134e4a', '#0f172a'],
-  elevated: ['#78350f', '#7c2d12', '#0f172a'],
-  high: ['#7f1d1d', '#881337', '#0f172a'],
-  veryhigh: ['#581c87', '#701a75', '#0f172a'],
+  normal: ['#064e3b', '#134e4a', '#043427'],
+  elevated: ['#78350f', '#7c2d12', '#50230a'],
+  high: ['#7f1d1d', '#881337', '#551313'],
+  veryhigh: ['#581c87', '#701a75', '#3b135a'],
 };
 
 

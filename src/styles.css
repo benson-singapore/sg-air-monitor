@@ -12,22 +12,19 @@ html {
   min-height: 100%;
   --theme-start: #7f1d1d;
   --theme-middle: #881337;
-  --theme-end: #0f172a;
+  --theme-end: #551313;
   --status-background: var(--theme-start);
-  /* iOS 26 Safari no longer reads <meta name="theme-color">; it samples a solid
-     background-color (body first, then html) to tint the status bar / toolbar.
-     The `background:` shorthand resets that color to transparent, which makes the
-     bar fall back to plain white - so set background-color and paint the gradient
-     as a background-image on top (kept in sync via --theme-start). */
+  /* Anchor solid colors at both viewport edges, including iOS safe areas.
+     Only theme changes animate the colors; the gradient itself stays still. */
   background-color: var(--theme-start);
-  background-image: linear-gradient(135deg, var(--theme-start) 0%, var(--theme-middle) 50%, var(--theme-end) 100%);
-  background-size: 300% 300%;
+  background-image: linear-gradient(
+    to bottom,
+    var(--theme-start) calc(env(safe-area-inset-top, 0px) + 6rem),
+    var(--theme-middle) 55%,
+    var(--theme-end) calc(100% - env(safe-area-inset-bottom, 0px) - 4rem)
+  );
+  background-size: 100% 100%;
   background-attachment: fixed;
-  animation: gradientShift 15s ease infinite;
-}
-@keyframes gradientShift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
 }
 #root { position: relative; isolation: isolate; min-height: 100%; background: transparent; }
 #root::before {
