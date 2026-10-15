@@ -57,7 +57,7 @@ function App() {
   const pullDistanceRef = useRef(0);
   const [readings, setReadings] = useState(null);
   const [timestamp, setTimestamp] = useState(null);
-  const [activeRegion, setActiveRegion] = useState('national');
+  const [activeRegion, setActiveRegion] = useState('central');
   const [worstRegion, setWorstRegion] = useState('central');
   const [loading, setLoading] = useState(true);
   const [offline, setOffline] = useState(false);
