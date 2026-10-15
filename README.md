@@ -55,6 +55,10 @@ npm run preview
 
 The app includes a web manifest and service worker. Open it in a supported browser and use the browser's **Install app** or **Add to Home Screen** option. Previously loaded app files can be served from cache when offline; live PM2.5 readings still require a network connection.
 
+The page uses a stationary vertical gradient: the top safe area and header share the current air-quality theme color, and the middle blends through its secondary color into a darker shade of the same theme at the bottom (deep green, brown-orange, red, or purple). There is no ambient gradient animation; selecting a region still smoothly transitions the theme colors.
+
+A real, opaque fixed element at the bottom shares the gradient's ending color so [Safari 26's edge-color sampling](https://github.com/andesco/safari-color-tinting) can tint its bottom toolbar separately from the top. It spans the safe area, has a 15px minimum height, and does not intercept input. This was visually checked in iOS 26.5 Simulator Safari. The `theme-color` meta tag remains synchronized with the top color for browsers that support it; older Safari versions and disabled website tinting may not honor separate top and bottom colors.
+
 ## Brand and app icons
 
 SG Air uses a small, coordinated icon set so its identity stays recognizable in the page header, browser chrome, and on a device home screen:
