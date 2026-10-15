@@ -71,9 +71,6 @@ function App() {
   useEffect(() => {
     const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     setIsInstalled(standalone);
-    const isIOS = /iPhone|iPad|iPod/i.test(window.navigator.userAgent)
-      || (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
-    document.documentElement.dataset.iosStandalone = String(isIOS && standalone);
 
     const captureInstallPrompt = (event) => {
       event.preventDefault();
@@ -266,14 +263,16 @@ function App() {
     const themeId = activeTheme.themeId || 'high';
     root.dataset.airTheme = themeId;
     const targetStops = THEME_BACKGROUND_STOPS[themeId];
+    const themeColor = document.querySelector('meta[name="theme-color"]');
     const backgroundTransition = d3.select(root)
       .transition('theme-background')
       .duration(THEME_TRANSITION_DURATION);
     THEME_BACKGROUND_PROPERTIES.forEach((property, index) => {
       backgroundTransition.style(property, targetStops[index]);
     });
-    backgroundTransition.on('end', () => {
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', targetStops[0]);
+    // Style tweens run first, so browser chrome uses the same color each frame.
+    backgroundTransition.tween('theme-color', () => () => {
+      themeColor?.setAttribute('content', root.style.getPropertyValue('--theme-start'));
     });
     return () => d3.select(root).interrupt('theme-background');
   }, [activeTheme.themeId]);

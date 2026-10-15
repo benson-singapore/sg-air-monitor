@@ -13,7 +13,6 @@ html {
   --theme-start: #7f1d1d;
   --theme-middle: #881337;
   --theme-end: #551313;
-  --status-background: var(--theme-start);
   /* Anchor solid colors at both viewport edges, including iOS safe areas.
      Only theme changes animate the colors; the gradient itself stays still. */
   background-color: var(--theme-start);
@@ -26,18 +25,18 @@ html {
   background-size: 100% 100%;
   background-attachment: fixed;
 }
-#root { position: relative; isolation: isolate; min-height: 100%; background: transparent; }
-#root::before {
-  content: '';
-  display: none;
+/* Safari 26 samples solid, edge-attached elements for toolbar tinting.
+   Use a real element above the app stacking context with a 15px opaque minimum;
+   a thinner strip did not tint the native toolbar in iOS 26.5 Simulator. */
+.browser-bottom-edge {
   position: fixed;
-  z-index: 0;
-  inset: 0 0 auto;
-  height: env(safe-area-inset-top, 0px);
-  background-color: var(--status-background);
+  inset: auto 0 0;
+  z-index: 5;
+  height: max(15px, env(safe-area-inset-bottom, 0px));
+  background-color: var(--theme-end);
   pointer-events: none;
 }
-html[data-ios-standalone="true"] #root::before { display: block; }
+#root { position: relative; isolation: isolate; min-height: 100%; background: transparent; }
 .app-content.min-h-screen { padding-top: calc(2rem + env(safe-area-inset-top)); }
 .app-content { z-index: 1; transition: transform .36s cubic-bezier(.2,.8,.2,1); }
 .app-content.is-pulling { transition: none; will-change: transform; }
