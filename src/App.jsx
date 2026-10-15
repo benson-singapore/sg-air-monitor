@@ -300,7 +300,7 @@ function App() {
     </div>}
     <div className={`app-content w-full max-w-md min-h-screen flex flex-col relative px-6 py-8 ${pullDistance > 0 ? 'is-pulling' : ''}`} style={pullOffset ? { transform: `translate3d(0, ${pullOffset}px, 0)` } : undefined}>
       <header className="topbar flex items-center justify-between mb-5 w-full z-10 gap-2">
-        <div className="topbar-brand min-w-0 flex items-center gap-3"><img src="/icons/air-logo.svg" alt="SG AIR" className="h-10 w-10 rounded-lg bg-white" /><div><h1 className="text-2xl font-bold tracking-wider opacity-90">SG AIR</h1><p className="brand-caption text-[9px] font-light tracking-[0.12em] opacity-60 uppercase mt-1 whitespace-nowrap">Real-time PM 2.5</p></div></div>
+        <div className="topbar-brand min-w-0 flex items-center gap-3"><img src="/icons/air-logo.svg" alt="SG AIR" className="h-10 w-10 rounded-lg bg-white" /><div><h1 className="text-2xl font-bold tracking-wider text-white">SG AIR</h1><p className="brand-caption text-[9px] font-light tracking-[0.12em] text-slate-200 uppercase mt-1 whitespace-nowrap">Real-time PM 2.5</p></div></div>
         <button onClick={refresh} aria-label="Refresh air quality" className="justify-self-end w-10 h-10 rounded-full glass-panel flex items-center justify-center hover:bg-white/15 transition-all active:scale-95">
           <span className={loading ? 'spin-slow' : ''}><RefreshIcon /></span>
         </button>
