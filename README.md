@@ -24,7 +24,7 @@ The experience pairs clear numeric readings with regional status labels, a color
 
 - **National and regional overview:** See the national average alongside readings for the North, South, East, West, and Central regions.
 - **Interactive regional map:** Select a regional card to focus the main reading and map marker on that area. Select the main reading to return to the national view.
-- **At-a-glance status:** Readings are grouped into Normal, Elevated, High, and Very High bands. Map colors, status chips, and the page theme respond to the selected reading.
+- **At-a-glance status:** Readings are grouped into Normal, Elevated, High, and Very High bands. Each map region, including South, uses the same status color band as its regional card; translucent fills blend with the page background. The page gradient and map marker smoothly transition with the selected region, and its card gets a brighter glass highlight.
 - **Responsive interface:** The dashboard adapts to narrow screens and larger displays, with compact region cards and a dedicated national summary.
 - **Clear connection state:** Loading, syncing, and offline states help explain when readings are being retrieved or unavailable.
 - **Installable and resilient shell:** A web manifest and service worker support home-screen installation and cache the app shell for return visits. Live readings still require a network connection.
