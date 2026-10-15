@@ -272,7 +272,7 @@ function App() {
     });
     // Style tweens run first, so browser chrome uses the same color each frame.
     backgroundTransition.tween('theme-color', () => () => {
-      themeColor?.setAttribute('content', root.style.getPropertyValue('--theme-start'));
+      themeColor?.setAttribute('content', getComputedStyle(root).getPropertyValue('--theme-start').trim());
     });
     return () => d3.select(root).interrupt('theme-background');
   }, [activeTheme.themeId]);
