@@ -7,23 +7,24 @@ const PULL_TO_REFRESH_DISTANCE = 64;
 const THEME_TRANSITION_DURATION = 1000;
 const REGION_NAMES = ['north', 'south', 'east', 'west', 'central'];
 const REGION_LABELS = { north: 'North', south: 'South', east: 'East', west: 'West', central: 'Central' };
+// D3 spherical polygons use clockwise exterior rings for regions smaller than a hemisphere.
 const GEOJSON = {
   type: 'FeatureCollection',
   features: [
     { type: 'Feature', properties: { name: 'north', center: [103.80, 1.43] }, geometry: { type: 'Polygon', coordinates: [[[103.70, 1.44], [103.75, 1.46], [103.79, 1.47], [103.82, 1.47], [103.86, 1.44], [103.88, 1.42], [103.85, 1.38], [103.76, 1.38], [103.70, 1.44]]] } },
     { type: 'Feature', properties: { name: 'east', center: [103.95, 1.36] }, geometry: { type: 'Polygon', coordinates: [[[103.88, 1.42], [103.92, 1.41], [103.95, 1.39], [104.00, 1.40], [104.04, 1.36], [104.01, 1.31], [103.93, 1.30], [103.90, 1.30], [103.89, 1.32], [103.85, 1.38], [103.88, 1.42]]] } },
     { type: 'Feature', properties: { name: 'central', center: [103.82, 1.35] }, geometry: { type: 'Polygon', coordinates: [[[103.76, 1.38], [103.85, 1.38], [103.89, 1.32], [103.84, 1.30], [103.80, 1.31], [103.76, 1.32], [103.76, 1.38]]] } },
-    { type: 'Feature', properties: { name: 'south', center: [103.82, 1.28] }, geometry: { type: 'Polygon', coordinates: [[[103.74, 1.28], [103.78, 1.26], [103.82, 1.24], [103.86, 1.27], [103.88, 1.29], [103.89, 1.32], [103.84, 1.30], [103.80, 1.31], [103.76, 1.32], [103.74, 1.28]]] } },
+    { type: 'Feature', properties: { name: 'south', center: [103.82, 1.28] }, geometry: { type: 'Polygon', coordinates: [[[103.74, 1.28], [103.76, 1.32], [103.80, 1.31], [103.84, 1.30], [103.89, 1.32], [103.88, 1.29], [103.86, 1.27], [103.82, 1.24], [103.78, 1.26], [103.74, 1.28]]] } },
     { type: 'Feature', properties: { name: 'west', center: [103.68, 1.34] }, geometry: { type: 'Polygon', coordinates: [[[103.70, 1.44], [103.76, 1.38], [103.76, 1.32], [103.74, 1.28], [103.71, 1.29], [103.68, 1.25], [103.64, 1.26], [103.61, 1.28], [103.60, 1.34], [103.63, 1.38], [103.67, 1.41], [103.70, 1.44]]] } },
   ],
 };
 
 function getAirQualityTheme(value) {
-  if (!Number.isFinite(value)) return { label: 'Loading...', themeId: null, chip: 'bg-white/10 border-white/15 text-white/70', dot: 'bg-white/50', color: '#cbd5e1' };
-  if (value <= 55) return { label: 'Normal', themeId: 'normal', chip: 'bg-emerald-500/15 border-emerald-300/20 text-emerald-100', dot: 'bg-emerald-300', color: '#34d399' };
-  if (value <= 150) return { label: 'Elevated', themeId: 'elevated', chip: 'bg-yellow-400/15 border-yellow-200/20 text-yellow-300', dot: 'bg-yellow-400', color: '#facc15' };
-  if (value <= 250) return { label: 'High', themeId: 'high', chip: 'bg-rose-300/15 border-rose-200/20 text-rose-200', dot: 'bg-rose-400', color: '#fb7185' };
-  return { label: 'Very High', themeId: 'veryhigh', chip: 'bg-violet-400/15 border-violet-200/20 text-violet-200', dot: 'bg-violet-400', color: '#c084fc' };
+  if (!Number.isFinite(value)) return { label: 'Loading...', themeId: null, chip: 'bg-white/10 border-white/10 text-white/70', dot: 'bg-white/50', color: '#cbd5e1', mapFill: 'rgba(255,255,255,0.05)' };
+  if (value <= 55) return { label: 'Normal', themeId: 'normal', chip: 'bg-white/10 border-white/10 text-emerald-300', dot: 'bg-emerald-400', color: '#34d399', mapFill: 'rgba(255,255,255,0.05)' };
+  if (value <= 150) return { label: 'Elevated', themeId: 'elevated', chip: 'bg-white/10 border-white/10 text-amber-300', dot: 'bg-amber-400', color: '#fbbf24', mapFill: 'rgba(251,191,36,0.2)' };
+  if (value <= 250) return { label: 'High', themeId: 'high', chip: 'bg-white/10 border-white/10 text-red-300', dot: 'bg-red-500', color: '#ef4444', mapFill: 'rgba(248,113,113,0.3)' };
+  return { label: 'Very High', themeId: 'veryhigh', chip: 'bg-white/10 border-white/10 text-purple-300', dot: 'bg-purple-500', color: '#a855f7', mapFill: 'rgba(192,132,252,0.4)' };
 }
 
 const THEME_BACKGROUND_PROPERTIES = ['--theme-start', '--theme-middle', '--theme-end'];
@@ -273,18 +274,18 @@ function App() {
     if (!map || !readings) return;
     REGION_NAMES.forEach((region) => {
       const theme = getAirQualityTheme(readings[region]);
-      map.svg.select(`#map-${region}`).transition().duration(1000)
-        .style('fill', theme.color)
-        .style('fill-opacity', 0.58)
-        .style('stroke', theme.color);
+      map.svg.select(`#map-${region}`).transition().duration(THEME_TRANSITION_DURATION)
+        .style('fill', theme.mapFill)
+        .style('stroke', 'rgba(255,255,255,0.3)');
     });
+    map.svg.select('#status-marker').raise();
     const markerRegion = activeRegion === 'national' ? worstRegion : activeRegion;
     const feature = GEOJSON.features.find((item) => item.properties.name === markerRegion);
     const [x, y] = map.projection(feature.properties.center);
     const markerColor = getAirQualityTheme(readings[markerRegion]).color;
-    map.svg.select('#status-marker').transition().duration(1000).attr('transform', `translate(${x}, ${y})`);
+    map.svg.select('#status-marker').transition().duration(THEME_TRANSITION_DURATION).attr('transform', `translate(${x}, ${y})`);
     map.svg.select('.marker-inner').transition().duration(800).attr('fill', markerColor);
-    map.svg.select('.marker-outer').transition().duration(800).attr('stroke', markerColor).attr('fill', markerColor).attr('fill-opacity', 0.12);
+    map.svg.select('.marker-outer').transition().duration(800).attr('stroke', markerColor).attr('fill', markerColor).attr('fill-opacity', 0.2);
   }, [readings, activeRegion, worstRegion]);
 
   return <div className="min-h-screen relative flex flex-col items-center">
