@@ -101,8 +101,9 @@ button { font-family: inherit; }
   margin-top: 0;
 }
 #map-container, #map-container * { background: none !important; background-color: transparent !important; }
-.region-path { fill: rgba(255,255,255,.05); stroke: rgba(255,255,255,.3); stroke-width: 1px; transition: fill .5s ease, stroke .5s ease; pointer-events: none; }
-.floating-marker { transition: transform 1.5s cubic-bezier(.4,0,.2,1); }
+.region-path { fill: rgba(255,255,255,.05); stroke: rgba(255,255,255,.3); stroke-width: 1px; transition: fill .5s ease, stroke .5s ease; pointer-events: visiblePainted; cursor: pointer; outline: none; }
+.region-path:focus-visible { stroke: rgba(255,255,255,.8) !important; stroke-width: 2px; animation: none; }
+.floating-marker { pointer-events: none; }
 .glow-text { text-shadow: 0 0 20px rgba(255,255,255,.4); }
 .ring-glow { box-shadow: 0 0 30px rgba(255,255,255,.1), inset 0 0 20px rgba(255,255,255,.05); }
 .install-dialog-backdrop { background: rgba(15,10,12,.68); }

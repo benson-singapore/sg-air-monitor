@@ -234,7 +234,16 @@ function App() {
       const path = d3.geoPath().projection(projection);
       svg.attr('width', width).attr('height', height);
       svg.selectAll('.region-path').data(GEOJSON.features, (d) => d.properties.name).join('path')
-        .attr('class', 'region-path map-pulse').attr('id', (d) => `map-${d.properties.name}`).attr('d', path);
+        .attr('class', 'region-path map-pulse').attr('id', (d) => `map-${d.properties.name}`).attr('d', path)
+        .attr('role', 'button').attr('tabindex', 0)
+        .attr('aria-label', (d) => `${REGION_LABELS[d.properties.name]} Region`)
+        .on('click', (_event, d) => setActiveRegion(d.properties.name))
+        .on('keydown', (event, d) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            setActiveRegion(d.properties.name);
+          }
+        });
       if (svg.select('#status-marker').empty()) {
         const markerGroup = svg.append('g').attr('class', 'floating-marker').attr('id', 'status-marker').attr('transform', `translate(${width / 2}, ${height / 2})`);
         markerGroup.append('circle').attr('class', 'marker-outer').attr('r', 18).attr('fill', 'rgba(22,163,74,.08)').attr('stroke', 'rgba(22,163,74,.55)').attr('stroke-width', 1.5);
@@ -271,7 +280,9 @@ function App() {
 
   useEffect(() => {
     const map = mapApi.current;
-    if (!map || !readings) return;
+    if (!map) return;
+    map.svg.selectAll('.region-path').attr('aria-pressed', (d) => String(d.properties.name === activeRegion));
+    if (!readings) return;
     REGION_NAMES.forEach((region) => {
       const theme = getAirQualityTheme(readings[region]);
       map.svg.select(`#map-${region}`).transition().duration(THEME_TRANSITION_DURATION)
@@ -283,7 +294,7 @@ function App() {
     const feature = GEOJSON.features.find((item) => item.properties.name === markerRegion);
     const [x, y] = map.projection(feature.properties.center);
     const markerColor = getAirQualityTheme(readings[markerRegion]).color;
-    map.svg.select('#status-marker').transition().duration(THEME_TRANSITION_DURATION).attr('transform', `translate(${x}, ${y})`);
+    map.svg.select('#status-marker').transition().duration(500).attr('transform', `translate(${x}, ${y})`);
     map.svg.select('.marker-inner').transition().duration(800).attr('fill', markerColor);
     map.svg.select('.marker-outer').transition().duration(800).attr('stroke', markerColor).attr('fill', markerColor).attr('fill-opacity', 0.2);
   }, [readings, activeRegion, worstRegion]);
@@ -315,7 +326,7 @@ function App() {
               <span className={`mt-3 px-4 py-1.5 rounded-full border text-xs font-semibold tracking-wide transition-all duration-300 ${activeTheme.chip}`}>{offline ? 'Offline' : loading ? readings ? 'Syncing...' : 'Loading...' : activeTheme.label}</span>
             </span>
           </button>
-          <svg id="map-container" ref={mapContainer} role="img" aria-label="新加坡五个区域的 PM2.5 地图" />
+          <svg id="map-container" ref={mapContainer} role="group" aria-label="新加坡五个区域的 PM2.5 地图" />
         </div>
 
         <div className="w-full">
